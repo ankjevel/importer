@@ -5,6 +5,7 @@ mod file;
 mod config;
 
 fn main() {
+    config::Config::new("Config.toml");
     let mut files = file::Files::new();
     files.check("/Users/dpn/dev/python/import-old/temp");
 

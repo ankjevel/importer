@@ -8,7 +8,38 @@ use std::error::Error;
 use std::io::prelude::*;
 use std::fs::{read_dir, File};
 use std::string::String;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::env::{current_dir as current, home_dir as home};
+
+fn current_directory() -> String {
+    current().unwrap().into_os_string().into_string().unwrap()
+}
+
+fn home_directory() -> String {
+    home().unwrap().into_os_string().into_string().unwrap()
+} 
+
+pub fn unwrap_path<'life>(file_path: &str) -> &'life Path {
+    const Slash: char = '/' as char;
+    const Tidle: char = '~' as char;
+
+    let home_dir = &*home_directory();
+    let current_dir = &*current_directory();
+
+    let mut owned_string = String::new();
+    
+    match file_path.as_bytes()[0] as char {
+      Slash => (),
+      Tidle => owned_string.push_str(home_dir),
+      _ => owned_string.push_str(current_dir)
+    }
+
+    owned_string.push_str(file_path);
+
+    let path: &'life Path = Path::new(&owned_string);
+
+    path
+}
 
 fn generate_md5(path: &Path) -> String {
     let display = path.display();
