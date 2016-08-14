@@ -6,9 +6,10 @@ use crypto::digest::Digest;
 use std::str;
 use std::error::Error;
 use std::io::prelude::*;
+use std::mem::{transmute, forget};
 use std::fs::{read_dir, File};
 use std::string::String;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::env::{current_dir as current, home_dir as home};
 
 fn current_directory() -> String {
@@ -19,9 +20,17 @@ fn home_directory() -> String {
     home().unwrap().into_os_string().into_string().unwrap()
 } 
 
-pub fn unwrap_path<'life>(file_path: &str) -> &'life Path {
-    const Slash: char = '/' as char;
-    const Tidle: char = '~' as char;
+fn string_to_static_str(s: String) -> &'static str {
+    unsafe {
+        let ret = transmute(&s as &str);
+        forget(s);
+        ret
+    }
+}
+
+pub fn unwrap_path<'a>(file_path: &&str) -> &'a Path {
+    const SLASH: char = '/' as char;
+    const TIDLE: char = '~' as char;
 
     let home_dir = &*home_directory();
     let current_dir = &*current_directory();
@@ -29,14 +38,14 @@ pub fn unwrap_path<'life>(file_path: &str) -> &'life Path {
     let mut owned_string = String::new();
     
     match file_path.as_bytes()[0] as char {
-      Slash => (),
-      Tidle => owned_string.push_str(home_dir),
+      SLASH => (),
+      TIDLE => owned_string.push_str(home_dir),
       _ => owned_string.push_str(current_dir)
     }
+   
 
-    owned_string.push_str(file_path);
-
-    let path: &'life Path = Path::new(&owned_string);
+    let s: &'static str = string_to_static_str(owned_string);
+    let path = Path::new(s);
 
     path
 }

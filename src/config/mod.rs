@@ -3,9 +3,7 @@ use std::error::Error;
 use std::io::prelude::*;
 use std::fs::{File};
 use std::string::String;
-use std::path::{Path, PathBuf};
-use std::env::{current_dir, home_dir};
-
+use std::path::Path;
 use file::unwrap_path;
 
 fn read_config(path: &Path) -> String {
@@ -28,12 +26,11 @@ impl Config {
   pub fn new<'life>(file_path: &'life str) -> Config {
     let conf = Config {};
 
-    
-    let unwraped_path = unwrap_path(file_path);
-    let file = Path::new(&file_path);
-    println!("dir? {}", PathBuf::from("~").to_str().unwrap());
-    println!("current {}", current_dir().unwrap().display());
-    read_config(file);
+    let unwraped_path = unwrap_path(&&*file_path);
+    let file = Path::new(&unwraped_path);
+    // println!("dir? {}", PathBuf::from("~").to_str().unwrap());
+    // println!("current {}", current_dir().unwrap().display());
+    read_config(&file);
 
     conf
   }
