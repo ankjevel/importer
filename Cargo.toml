@@ -5,3 +5,4 @@ authors = ["Dennis Pettersson <mail@dennispettersson.se>"]
 
 [dependencies]
 rust-crypto = "^0.2"
+toml = "^0.1"

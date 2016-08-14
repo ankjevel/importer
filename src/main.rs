@@ -1,22 +1,14 @@
 extern crate crypto;
-
-use crypto::md5::Md5;
-use crypto::digest::Digest;
+extern crate toml;
 
 mod file;
-mod hash;
+mod config;
 
 fn main() {
-    {
-        let files = file::Files::new();
-        files.check(".");
-        // loop {
-        //     match files.next() {
-        //         Some(v) => { println!("{:?}", v); }
-        //         None => {break;}
-        //     }
-        // }
-    }
+    let mut files = file::Files::new();
+    files.check("/Users/dpn/dev/python/import-old/temp");
 
-    println!("{}", hash::md5::from_str("key"));
+    for md5 in files.md5s {
+        println!("md5: {}", md5)
+    }
 }
