@@ -6,11 +6,12 @@ use crypto::digest::Digest;
 use std::str;
 use std::error::Error;
 use std::io::prelude::*;
-use std::mem::{transmute, forget};
 use std::fs::{read_dir, File};
 use std::string::String;
 use std::path::{Path};
 use std::env::{current_dir as current, home_dir as home};
+
+use string::string_to_static_str;
 
 const SLASH: char = '/' as char;
 const TIDLE: char = '~' as char;
@@ -22,14 +23,6 @@ fn current_directory() -> String {
 fn home_directory() -> String {
     home().unwrap().into_os_string().into_string().unwrap() + "/"
 } 
-
-fn string_to_static_str(s: String) -> &'static str {
-    unsafe {
-        let ret = transmute(&s as &str);
-        forget(s);
-        ret
-    }
-}
 
 pub fn unwrap_path<'a>(file_path: &&str) -> &'a Path {
     let home_dir = &*home_directory();
@@ -93,9 +86,7 @@ impl Files {
     }
 
     pub fn check(&mut self, dir: &str) {
-        // println!("dir: {}", dir);
         self.traverse(&dir);
-        // println!("contents {:?}", self.md5s);
     }
 
     fn push(&mut self, md5: String) {
@@ -122,7 +113,6 @@ impl Files {
             };
 
             if !allowed.contains(&&*extension.to_lowercase()) {
-                // println!("extension: {}", extension);
                 continue
             }
             
