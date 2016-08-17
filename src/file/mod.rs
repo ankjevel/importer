@@ -2,13 +2,14 @@ extern crate crypto;
 
 use crypto::md5::Md5;
 use crypto::digest::Digest;
-
+ 
 use std::str;
 use std::error::Error;
 use std::io::prelude::*;
 use std::fs::{read_dir, File};
 use std::string::String;
 use std::path::{Path};
+use std::collections::HashMap;
 use std::env::{current_dir as current, home_dir as home};
 
 use string::string_to_static_str;
@@ -75,13 +76,15 @@ fn generate_md5(path: &Path) -> String {
 }
 
 pub struct Files {
-    pub md5s: Vec<String>
+    _paths: Vec<String>,
+    pub md5s: HashMap<String, String>
 }
 
 impl Files {
     pub fn new() -> Files {
         Files {
-            md5s: Vec::new()
+            _paths: Vec::new(),
+            md5s: HashMap::new()
         }
     }
 
@@ -89,8 +92,8 @@ impl Files {
         self.traverse(&dir);
     }
 
-    fn push(&mut self, md5: String) {
-        self.md5s.push(md5)
+    fn push(&mut self, path: String, md5: String) {
+        self.md5s.insert(path, md5);
     }
     
     fn traverse(&mut self, dir: &str) {
@@ -115,8 +118,14 @@ impl Files {
             if !allowed.contains(&&*extension.to_lowercase()) {
                 continue
             }
-            
-            self.push(generate_md5(&path))
+
+            let mut path_str = String::new();
+            let created = path.metadata().unwrap().created().unwrap().elapsed().unwrap().subsec_nanos().to_string();
+            path_str.push_str(&*created);
+            path_str.push_str(".");
+            path_str.push_str(&&*extension.to_lowercase());
+
+            self.push(path_str, generate_md5(&path))
         }
     }
 }
