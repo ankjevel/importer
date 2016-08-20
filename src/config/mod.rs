@@ -1,15 +1,31 @@
 extern crate toml;
 
+use toml::{
+    Parser,
+    Value
+};
+
 use std::str;
 use std::error::Error;
 use std::io::prelude::*;
-use std::fs::{File};
+use std::fs::File;
 use std::string::String;
 use std::path::Path;
+use std::env::var;
 
-use toml::{Parser, Value};
 use file::unwrap_path;
-use string::string_to_static_str;
+use string::{
+    string_to_static_str,
+    borrowed_string_to_static_str
+};
+
+fn get_config_path() -> &'static str {
+    let default_value: &'static str = "Config.toml";
+    match var("CONFIG") {
+        Ok(val) => borrowed_string_to_static_str(&val),
+        Err(_) => default_value,
+    }
+}
 
 fn read_config<'a>(path: &'a Path) -> Parser<'a> {
     let display = path.display();
@@ -42,8 +58,8 @@ pub struct Config<'a> {
 }
 
 impl<'a> Config<'a> {
-    pub fn new<'life>(file_path: &'life str) -> Config<'life> {
-        let unwraped_path = unwrap_path(&file_path);
+    pub fn new<'life>() -> Config<'life> {
+        let unwraped_path = unwrap_path(&get_config_path());
         let file: &'life Path = unwraped_path;
 
         Config {
@@ -74,4 +90,10 @@ impl<'a> Config<'a> {
         // }
         // let result = self.parser.lookup(q).get_str().unwrap();
     }
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use config;
 }
