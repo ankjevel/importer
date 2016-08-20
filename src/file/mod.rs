@@ -112,10 +112,12 @@ impl File {
         // path_str.push_str(".");
         // path_str.push_str(&&*extension);
 
+        let created = unwrap_created_date(&path);
+
         File {
             path_string: String::from(path.to_str().unwrap()),
             md5: "".to_string(),
-            created: "".to_string(),
+            created: created,
             extension: String::from(borrowed_string_to_static_str(&extension))
         }
     }
@@ -142,17 +144,6 @@ impl File {
         let md5 = generate_md5(&bytes);
 
         self.md5 = md5;
-    }
-
-    #[allow(dead_code)]
-    pub fn set_created(&mut self) {
-        if self.created != "" {
-            return
-        }
-
-        let path = Path::new(&self.path_string);
-        let created = unwrap_created_date(&path);
-        self.created = created
     }
 }
 

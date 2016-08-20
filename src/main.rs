@@ -15,7 +15,6 @@ fn main() {
     for mut file in files.collection {
         println!("fn: {}", &file.path_string);
         file.set_md5();
-        file.set_created();
         println!("file: {}", &file)
     }
 }
