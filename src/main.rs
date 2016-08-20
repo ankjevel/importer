@@ -12,8 +12,8 @@ fn main() {
     let mut files = file::Files::new();
     files.check(path);
 
-    for (file_path, md5) in files.md5s {
-        println!("path: {}, md5: {}", file_path, md5)
+    for file in files.collection.iter() {
+        println!("file: {}", file)
     }
 }
 

@@ -4,21 +4,27 @@ use crypto::md5::Md5;
 use crypto::digest::Digest;
 
 use std::str;
+use std::i64;
 use std::error::Error;
 use std::io::prelude::*;
+use std::os::unix::fs::MetadataExt;
+use std::string::String;
+// use std::collections::HashMap;
+use std::fmt;
+use std::path::Path;
 use std::fs::{
     read_dir,
-    File
+    File as fsFile
 };
-use std::string::String;
-use std::path::Path;
-use std::collections::HashMap;
 use std::env::{
     current_dir as current,
     home_dir as home
 };
 
-use string::string_to_static_str;
+use string::{
+    string_to_static_str,
+    borrowed_string_to_static_str
+};
 
 const SLASH: char = '/' as char;
 const TIDLE: char = '~' as char;
@@ -33,11 +39,9 @@ fn home_directory() -> String {
 
 fn unwrap_created_date<'a>(path: &'a Path) -> String {
     let meta = &path.metadata().unwrap();
-    let created = meta.created().unwrap();
-    let elapsed = created.elapsed().unwrap();
-    let nanos = elapsed.subsec_nanos().to_string();
+    let created: i64 = meta.ctime();
 
-    nanos
+    created.to_string()
 }
 
 pub fn unwrap_path<'a>(file_path: &&str) -> &'a Path {
@@ -67,19 +71,7 @@ pub fn unwrap_path<'a>(file_path: &&str) -> &'a Path {
     Path::new(s)
 }
 
-fn generate_md5(path: &Path) -> String {
-    let display = path.display();
-    let mut file = match File::open(&path) {
-        Err(why) => panic!("couldn't open {}: {}", display, why.description()),
-        Ok(file) => file
-    };
-
-    let mut bytes = Vec::new();
-    match file.read_to_end(&mut bytes) {
-        Err(why) => panic!("can't read file {}: {}", display, why.description()),
-        Ok(_) => ()
-    }
-
+fn generate_md5(bytes: &[u8]) -> String {
     let data = String::from_utf8_lossy(&bytes);
 
     let mut hasher = Md5::new();
@@ -90,16 +82,69 @@ fn generate_md5(path: &Path) -> String {
     hasher.result_str()
 }
 
+fn get_extension<'a>(path: &'a Path) -> &'static str {
+    let extension = match path.extension() {
+        None => "none",
+        Some(ext) => ext.to_str().unwrap()
+    };
+
+    borrowed_string_to_static_str(&&*extension.to_lowercase())
+}
+
+pub struct File {
+    path_string: String,
+    md5: String,
+    extension: String,
+    created: String
+}
+
+impl fmt::Display for File {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({:?}, {}, {}, {})", self.path_string, self.md5, self.created, self.extension)
+    }
+}
+
+impl File {
+    pub fn new(path: &Path) -> File {
+        let extension = get_extension(&path);
+
+        let display = path.display();
+        let mut file = match fsFile::open(&path) {
+            Err(why) => panic!("couldn't open {}: {}", display, why.description()),
+            Ok(file) => file
+        };
+
+        let mut bytes = Vec::new();
+        match file.read_to_end(&mut bytes) {
+            Err(why) => panic!("can't read file {}: {}", display, why.description()),
+            Ok(_) => ()
+        }
+
+        let md5 = generate_md5(&bytes);
+        let created = unwrap_created_date(&path);
+
+        // let mut path_str = String::new();
+        // path_str.push_str(&*created);
+        // path_str.push_str(".");
+        // path_str.push_str(&&*extension);
+
+        File {
+            path_string: String::from(path.to_str().unwrap()),
+            md5: md5,
+            created: created,
+            extension: String::from(borrowed_string_to_static_str(&extension))
+        }
+    }
+}
+
 pub struct Files {
-    _paths: Vec<String>,
-    pub md5s: HashMap<String, String>
+    pub collection: Box<Vec<File>>
 }
 
 impl Files {
     pub fn new() -> Files {
         Files {
-            _paths: Vec::new(),
-            md5s: HashMap::new()
+            collection: Box::new(Vec::new())
         }
     }
 
@@ -107,8 +152,8 @@ impl Files {
         self.traverse(&dir);
     }
 
-    fn push(&mut self, path: String, md5: String) {
-        self.md5s.insert(path, md5);
+    fn push(&mut self, file: File) {
+        self.collection.push(file)
     }
 
     fn traverse(&mut self, dir: &str) {
@@ -118,31 +163,19 @@ impl Files {
         ];
 
         for entry in read_dir(&dir).unwrap() {
-            let path_buf = entry.unwrap().path();
-            let path = Path::new(&path_buf);
+            let s = borrowed_string_to_static_str(&entry.unwrap().path().to_str().unwrap());
+            let path = Path::new(s);
 
             if path.is_file() == false {
                 self.traverse(path.to_str().unwrap());
                 continue
             }
 
-            let extension = match path.extension() {
-                None => "none",
-                Some(ext) => ext.to_str().unwrap()
-            };
-
-            if !allowed_file_types.contains(&&*extension.to_lowercase()) {
+            if !allowed_file_types.contains(&&*get_extension(&path)) {
                 continue
             }
 
-            let created = unwrap_created_date(&path);
-
-            let mut path_str = String::new();
-            path_str.push_str(&*created);
-            path_str.push_str(".");
-            path_str.push_str(&&*extension.to_lowercase());
-
-            self.push(path_str, generate_md5(&path))
+            self.push(File::new(&path))
         }
     }
 }

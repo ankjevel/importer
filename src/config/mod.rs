@@ -79,16 +79,11 @@ impl<'a> Config<'a> {
             None => panic!("table does not exist")
         };
 
+        println!("values: '{:?}', table: '{:?}'", &values, &table);
+
         let lookup = &table.lookup(q).unwrap().as_str().unwrap();
-        let mut result = String::new();
 
-        result.push_str(lookup);
-
-        string_to_static_str(result)
-        // for mut col in collection {
-        //   println!("col: '{}'", col.lookup_mut(*q).unwrap());
-        // }
-        // let result = self.parser.lookup(q).get_str().unwrap();
+        borrowed_string_to_static_str(&lookup)
     }
 }
 
