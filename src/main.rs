@@ -12,8 +12,10 @@ fn main() {
     let mut files = file::Files::new();
     files.check(path);
 
-    for file in files.collection.iter() {
-        println!("file: {}", file)
+    for mut file in files.collection {
+        println!("fn: {}", &file.path_string);
+        file.set_md5();
+        file.set_created();
+        println!("file: {}", &file)
     }
 }
-

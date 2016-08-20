@@ -9,7 +9,6 @@ use std::error::Error;
 use std::io::prelude::*;
 use std::os::unix::fs::MetadataExt;
 use std::string::String;
-// use std::collections::HashMap;
 use std::fmt;
 use std::path::Path;
 use std::fs::{
@@ -92,7 +91,7 @@ fn get_extension<'a>(path: &'a Path) -> &'static str {
 }
 
 pub struct File {
-    path_string: String,
+    pub path_string: String,
     md5: String,
     extension: String,
     created: String
@@ -108,6 +107,26 @@ impl File {
     pub fn new(path: &Path) -> File {
         let extension = get_extension(&path);
 
+        // let mut path_str = String::new();
+        // path_str.push_str(&*created);
+        // path_str.push_str(".");
+        // path_str.push_str(&&*extension);
+
+        File {
+            path_string: String::from(path.to_str().unwrap()),
+            md5: "".to_string(),
+            created: "".to_string(),
+            extension: String::from(borrowed_string_to_static_str(&extension))
+        }
+    }
+
+    pub fn set_md5(&mut self) {
+        if self.md5 != "" {
+            return
+        }
+
+        let path = Path::new(&self.path_string);
+
         let display = path.display();
         let mut file = match fsFile::open(&path) {
             Err(why) => panic!("couldn't open {}: {}", display, why.description()),
@@ -121,30 +140,30 @@ impl File {
         }
 
         let md5 = generate_md5(&bytes);
-        let created = unwrap_created_date(&path);
 
-        // let mut path_str = String::new();
-        // path_str.push_str(&*created);
-        // path_str.push_str(".");
-        // path_str.push_str(&&*extension);
+        self.md5 = md5;
+    }
 
-        File {
-            path_string: String::from(path.to_str().unwrap()),
-            md5: md5,
-            created: created,
-            extension: String::from(borrowed_string_to_static_str(&extension))
+    #[allow(dead_code)]
+    pub fn set_created(&mut self) {
+        if self.created != "" {
+            return
         }
+
+        let path = Path::new(&self.path_string);
+        let created = unwrap_created_date(&path);
+        self.created = created
     }
 }
 
 pub struct Files {
-    pub collection: Box<Vec<File>>
+    pub collection: Vec<File>
 }
 
 impl Files {
     pub fn new() -> Files {
         Files {
-            collection: Box::new(Vec::new())
+            collection: Vec::new()
         }
     }
 
