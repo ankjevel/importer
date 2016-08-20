@@ -158,6 +158,10 @@ impl Files {
         }
     }
 
+    pub fn collection_mut(&mut self) -> &mut Vec<File> {
+        self.collection.as_mut()
+    }
+
     pub fn check(&mut self, dir: &str) {
         self.traverse(&dir);
     }

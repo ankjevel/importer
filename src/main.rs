@@ -12,9 +12,13 @@ fn main() {
     let mut files = file::Files::new();
     files.check(path);
 
-    for mut file in files.collection {
+    for file in files.collection_mut() {
         println!("fn: {}", &file.path_string);
-        file.set_md5();
+        &file.set_md5();
+        println!("file: {}", &file)
+    }
+
+    for file in files.collection_mut() {
         println!("file: {}", &file)
     }
 }
