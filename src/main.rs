@@ -1,14 +1,14 @@
 extern crate crypto;
 extern crate toml;
 
-mod file;
-mod config;
-mod string;
+pub mod file;
+pub mod config;
+pub mod string;
 
 use std::env::var;
 
 fn get_config_path() -> &'static str {
-    let default_value: &'static str = "~/Config.toml"; 
+    let default_value: &'static str = "~/Config.toml";
     match var("CONFIG") {
         Ok(val) => string::string_to_static_str(val),
         Err(_) => default_value,

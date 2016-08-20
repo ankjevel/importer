@@ -1,4 +1,4 @@
-FROM jimmycuadra/rust 
+FROM jimmycuadra/rust
 
 WORKDIR /app
 

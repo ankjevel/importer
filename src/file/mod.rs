@@ -2,15 +2,21 @@ extern crate crypto;
 
 use crypto::md5::Md5;
 use crypto::digest::Digest;
- 
+
 use std::str;
 use std::error::Error;
 use std::io::prelude::*;
-use std::fs::{read_dir, File};
+use std::fs::{
+    read_dir,
+    File
+};
 use std::string::String;
-use std::path::{Path};
+use std::path::Path;
 use std::collections::HashMap;
-use std::env::{current_dir as current, home_dir as home};
+use std::env::{
+    current_dir as current,
+    home_dir as home
+};
 
 use string::string_to_static_str;
 
@@ -23,7 +29,16 @@ fn current_directory() -> String {
 
 fn home_directory() -> String {
     home().unwrap().into_os_string().into_string().unwrap() + "/"
-} 
+}
+
+fn unwrap_created_date<'a>(path: &'a Path) -> String {
+    let meta = &path.metadata().unwrap();
+    let created = meta.created().unwrap();
+    let elapsed = created.elapsed().unwrap();
+    let nanos = elapsed.subsec_nanos().to_string();
+
+    nanos
+}
 
 pub fn unwrap_path<'a>(file_path: &&str) -> &'a Path {
     let home_dir = &*home_directory();
@@ -34,18 +49,18 @@ pub fn unwrap_path<'a>(file_path: &&str) -> &'a Path {
 
     let mut mutable_str = String::new();
     match file_path.as_bytes()[0] as char {
-      SLASH => (),
-      TIDLE => {
-          mutable_str.push_str(home_dir);
-          file_path_copy.remove(0);
-          match file_path_copy.chars().nth(0).unwrap() {
-              SLASH => { file_path_copy.remove(0); },
-              _ => ()
-          }
-      },
-      _ => {
-          mutable_str.push_str(current_dir);
-      }
+        SLASH => (),
+        TIDLE => {
+            mutable_str.push_str(home_dir);
+            file_path_copy.remove(0);
+            match file_path_copy.chars().nth(0).unwrap() {
+                SLASH => { file_path_copy.remove(0); },
+                _ => ()
+            }
+        },
+        _ => {
+            mutable_str.push_str(current_dir);
+        }
     }
     mutable_str.push_str(&file_path_copy);
     let s: &'static str = string_to_static_str(mutable_str);
@@ -62,7 +77,7 @@ fn generate_md5(path: &Path) -> String {
     let mut bytes = Vec::new();
     match file.read_to_end(&mut bytes) {
         Err(why) => panic!("can't read file {}: {}", display, why.description()),
-        Ok(_) => () 
+        Ok(_) => ()
     }
 
     let data = String::from_utf8_lossy(&bytes);
@@ -95,12 +110,13 @@ impl Files {
     fn push(&mut self, path: String, md5: String) {
         self.md5s.insert(path, md5);
     }
-    
+
     fn traverse(&mut self, dir: &str) {
-        let allowed = vec![
+        let allowed_file_types = vec![
             "aae", "arw", "jpeg", "jpg",
             "mov", "mp4", "mts", "raw"
         ];
+
         for entry in read_dir(&dir).unwrap() {
             let path_buf = entry.unwrap().path();
             let path = Path::new(&path_buf);
@@ -115,12 +131,13 @@ impl Files {
                 Some(ext) => ext.to_str().unwrap()
             };
 
-            if !allowed.contains(&&*extension.to_lowercase()) {
+            if !allowed_file_types.contains(&&*extension.to_lowercase()) {
                 continue
             }
 
+            let created = unwrap_created_date(&path);
+
             let mut path_str = String::new();
-            let created = path.metadata().unwrap().created().unwrap().elapsed().unwrap().subsec_nanos().to_string();
             path_str.push_str(&*created);
             path_str.push_str(".");
             path_str.push_str(&&*extension.to_lowercase());
