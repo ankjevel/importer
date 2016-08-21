@@ -7,10 +7,9 @@ mod string;
 
 fn main() {
     let mut conf = config::Config::new();
-    let path = &conf.query("paths", "images");
 
     let mut files = file::Files::new();
-    files.check(path);
+    files.check(conf.query_str("paths", "images"));
 
     for file in files.collection_mut() {
         println!("fn: {}", &file.path_string);

@@ -12,6 +12,7 @@ use std::fs::File;
 use std::string::String;
 use std::path::Path;
 use std::env::var;
+use std::collections::BTreeMap;
 
 use file::unwrap_path;
 use string::{
@@ -53,37 +54,34 @@ fn read_config<'a>(path: &'a Path) -> Parser<'a> {
     Parser::new(&contents)
 }
 
-pub struct Config<'a> {
-    parser: Parser<'a>
+pub struct Config {
+    parser: BTreeMap<String, Value>
 }
 
-impl<'a> Config<'a> {
-    pub fn new<'life>() -> Config<'life> {
+impl Config {
+    pub fn new() -> Config {
         let unwraped_path = unwrap_path(&get_config_path());
-        let file: &'life Path = unwraped_path;
+        let file: &Path = unwraped_path;
+        let cfg = read_config(&file).parse().unwrap();
 
         Config {
-            parser: read_config(&file)
+            parser: cfg
         }
     }
 
-    pub fn query(&mut self, table: &'static str, q: &'static str) -> &'static str {
-        println!("q: {:?}", q);
-        let values = match self.parser.parse() {
-            Some(values) => values,
-            None => panic!("unwrap failed")
-        };
-
-        let table: &Value = match values.get(table) {
+    fn query(&mut self, table: &'static str, q: &'static str) -> Value {
+        let table: &Value = match self.parser.get(table) {
             Some(table) => table,
             None => panic!("table does not exist")
         };
 
-        println!("values: '{:?}', table: '{:?}'", &values, &table);
+        table.lookup(q).unwrap().clone()
+    }
 
-        let lookup = &table.lookup(q).unwrap().as_str().unwrap();
+    pub fn query_str(&mut self, table: &'static str, q: &'static str) -> &'static str {
+        let result = self.query(table, q);
 
-        borrowed_string_to_static_str(&lookup)
+        borrowed_string_to_static_str(result.as_str().unwrap())
     }
 }
 
