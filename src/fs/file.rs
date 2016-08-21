@@ -60,6 +60,7 @@ impl File {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set_md5(&mut self) {
         if self.md5 != "" {
             return;
