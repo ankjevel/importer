@@ -5,30 +5,31 @@ mod fs;
 mod config;
 mod string;
 
-use std::thread;
-use std::sync::mpsc;
+use std::thread::spawn;
+use std::sync::mpsc::channel;
 
-static NTHREADS: f32 = 15.0;
+use fs::file::File as File;
+use fs::files::Files as Files;
+use config::Config as Config;
 
-fn to_sep_col<'a >(col: &mut Vec<fs::file::File>) -> Vec<Vec<fs::file::File>>{
-    let x = col.len() as f32 / NTHREADS;
+static NTHREADS: i32 = 15;
 
-    let extra = ((x % 1.0) * NTHREADS) as i32;
-
-    let iterations = x as i32;
+fn to_sep_col<'a >(col: &mut Vec<File>) -> Vec<Vec<File>>{
+    let x = col.len() as f32 / (NTHREADS as f32);
+    let (extra, iterations) = (((x % 1.0) * (NTHREADS as f32)) as i32, x as i32);
     let mut vec = vec![iterations; NTHREADS as usize];
 
     for i in 0..extra {
         vec[i as usize] = iterations + 1
     }
 
-    let mut sliced: Vec<Vec<fs::file::File>> = Vec::new();
+    let mut sliced: Vec<Vec<File>> = Vec::new();
     let mut curr = 0;
-    for i in 0..(NTHREADS as i32) {
+    for i in 0..NTHREADS {
         let iter = vec[i as usize];
-        let mut inner_vec: Vec<fs::file::File> = Vec::new();
+        let mut inner_vec: Vec<File> = Vec::new();
         for _ in 0..iter {
-            let file: fs::file::File = col.pop().unwrap();
+            let file: File = col.pop().unwrap();
             inner_vec.push(file);
             curr = curr + 1;
         }
@@ -40,15 +41,14 @@ fn to_sep_col<'a >(col: &mut Vec<fs::file::File>) -> Vec<Vec<fs::file::File>>{
 }
 
 fn main() {
-    let mut conf = config::Config::new();
-    let mut files = fs::files::Files::new();
+    let (mut conf, mut files) = (Config::new(), Files::new());
     files.check(conf.query_str("paths", "images"));
 
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = channel();
 
     for vec in to_sep_col(files.collection_mut()) {
         let transmitter = tx.clone();
-        thread::spawn(move || {
+        spawn(move || {
             let mut results = Vec::new();
             for mut file in vec {
                 &file.set_md5();
@@ -58,7 +58,7 @@ fn main() {
         });
     }
 
-    for _ in 0..(NTHREADS as i32) {
+    for _ in 0..NTHREADS {
         for file in rx.recv().unwrap() {
             println!("file! {}", file);
         }
