@@ -8,13 +8,13 @@ mod string;
 use std::thread::spawn;
 use std::sync::mpsc::channel;
 
-use fs::file::File as File;
-use fs::files::Files as Files;
-use config::Config as Config;
+use fs::file::File;
+use fs::files::Files;
+use config::Config;
 
 static NTHREADS: i32 = 15;
 
-fn to_sep_col<'a >(col: &mut Vec<File>) -> Vec<Vec<File>>{
+fn to_sep_col<'a>(col: &mut Vec<File>) -> Vec<Vec<File>> {
     let x = col.len() as f32 / (NTHREADS as f32);
     let (extra, iterations) = (((x % 1.0) * (NTHREADS as f32)) as i32, x as i32);
     let mut vec = vec![iterations; NTHREADS as usize];
