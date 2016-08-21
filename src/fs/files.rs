@@ -7,14 +7,12 @@ use super::file::File;
 use super::dirs::get_extension;
 
 pub struct Files {
-    pub collection: Vec<File>
+    pub collection: Vec<File>,
 }
 
 impl Files {
     pub fn new() -> Files {
-        Files {
-            collection: Vec::new()
-        }
+        Files { collection: Vec::new() }
     }
 
     pub fn collection_mut(&mut self) -> &mut Vec<File> {
@@ -30,10 +28,7 @@ impl Files {
     }
 
     fn traverse(&mut self, dir: &str) {
-        let allowed_file_types = vec![
-            "aae", "arw", "jpeg", "jpg",
-            "mov", "mp4", "mts", "raw"
-        ];
+        let allowed_file_types = vec!["aae", "arw", "jpeg", "jpg", "mov", "mp4", "mts", "raw"];
 
         for entry in read_dir(&dir).unwrap() {
             let s = borrowed_string_to_static_str(&entry.unwrap().path().to_str().unwrap());
@@ -41,11 +36,11 @@ impl Files {
 
             if path.is_file() == false {
                 self.traverse(path.to_str().unwrap());
-                continue
+                continue;
             }
 
             if !allowed_file_types.contains(&&*get_extension(&path)) {
-                continue
+                continue;
             }
 
             self.push(File::new(&path))

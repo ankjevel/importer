@@ -1,9 +1,6 @@
 extern crate toml;
 
-use toml::{
-    Parser,
-    Value
-};
+use toml::{Parser, Value};
 
 use std::str;
 use std::error::Error;
@@ -16,10 +13,7 @@ use std::collections::BTreeMap;
 
 use fs::dirs::unwrap_path;
 
-use string::{
-    string_to_static_str,
-    borrowed_string_to_static_str
-};
+use string::{string_to_static_str, borrowed_string_to_static_str};
 
 fn get_config_path() -> &'static str {
     let default_value: &'static str = "Config.toml";
@@ -33,12 +27,12 @@ fn read_config<'a>(path: &'a Path) -> Parser<'a> {
     let display = path.display();
     let mut file = match File::open(&path) {
         Err(why) => panic!("couldn't open {}: {}", display, why.description()),
-        Ok(file) => file
+        Ok(file) => file,
     };
 
     let extension = match path.extension() {
         None => "",
-        Some(ext) => ext.to_str().unwrap()
+        Some(ext) => ext.to_str().unwrap(),
     };
 
     if extension.to_lowercase() != "toml" {
@@ -48,7 +42,7 @@ fn read_config<'a>(path: &'a Path) -> Parser<'a> {
     let mut bytes = Vec::new();
     match file.read_to_end(&mut bytes) {
         Err(why) => panic!("can't read file {}: {}", display, why.description()),
-        Ok(_) => ()
+        Ok(_) => (),
     }
     let contents = string_to_static_str(String::from_utf8_lossy(&bytes).into_owned());
 
@@ -56,7 +50,7 @@ fn read_config<'a>(path: &'a Path) -> Parser<'a> {
 }
 
 pub struct Config {
-    parser: BTreeMap<String, Value>
+    parser: BTreeMap<String, Value>,
 }
 
 impl Config {
@@ -64,18 +58,16 @@ impl Config {
         let unwraped_path = unwrap_path(&get_config_path());
         let cfg = match read_config(&unwraped_path).parse() {
             Some(cfg) => cfg,
-            None => panic!("can't unwrap config")
+            None => panic!("can't unwrap config"),
         };
 
-        Config {
-            parser: cfg
-        }
+        Config { parser: cfg }
     }
 
     fn query(&mut self, table: &'static str, q: &'static str) -> Value {
         let table: &Value = match self.parser.get(table) {
             Some(table) => table,
-            None => panic!("table does not exist")
+            None => panic!("table does not exist"),
         };
 
         table.lookup(q).unwrap().clone()

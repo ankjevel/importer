@@ -3,15 +3,9 @@ use std::i64;
 use std::os::unix::fs::MetadataExt;
 use std::string::String;
 use std::path::Path;
-use std::env::{
-    current_dir as current,
-    home_dir as home
-};
+use std::env::{current_dir as current, home_dir as home};
 
-use string::{
-    string_to_static_str,
-    borrowed_string_to_static_str
-};
+use string::{string_to_static_str, borrowed_string_to_static_str};
 
 const SLASH: char = '/' as char;
 const TIDLE: char = '~' as char;
@@ -34,7 +28,7 @@ pub fn unwrap_created_date<'a>(path: &'a Path) -> String {
 pub fn get_extension<'a>(path: &'a Path) -> &'static str {
     let extension = match path.extension() {
         None => "none",
-        Some(ext) => ext.to_str().unwrap()
+        Some(ext) => ext.to_str().unwrap(),
     };
 
     borrowed_string_to_static_str(&&*extension.to_lowercase())
@@ -54,10 +48,12 @@ pub fn unwrap_path<'a>(file_path: &&str) -> &'a Path {
             mutable_str.push_str(home_dir);
             file_path_copy.remove(0);
             match file_path_copy.chars().nth(0).unwrap() {
-                SLASH => { file_path_copy.remove(0); },
-                _ => ()
+                SLASH => {
+                    file_path_copy.remove(0);
+                }
+                _ => (),
             }
-        },
+        }
         _ => {
             mutable_str.push_str(current_dir);
         }
