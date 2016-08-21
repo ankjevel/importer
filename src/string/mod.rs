@@ -16,7 +16,6 @@ pub fn borrowed_string_to_static_str<'a>(s: &'a str) -> &'static str {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use string;

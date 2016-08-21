@@ -14,7 +14,8 @@ use std::path::Path;
 use std::env::var;
 use std::collections::BTreeMap;
 
-use file::unwrap_path;
+use fs::dirs::unwrap_path;
+
 use string::{
     string_to_static_str,
     borrowed_string_to_static_str
