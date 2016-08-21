@@ -61,8 +61,10 @@ pub struct Config {
 impl Config {
     pub fn new() -> Config {
         let unwraped_path = unwrap_path(&get_config_path());
-        let file: &Path = unwraped_path;
-        let cfg = read_config(&file).parse().unwrap();
+        let cfg = match read_config(&unwraped_path).parse() {
+            Some(cfg) => cfg,
+            None => panic!("can't unwrap config")
+        };
 
         Config {
             parser: cfg
