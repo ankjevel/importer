@@ -12,7 +12,7 @@ use fs::file::File;
 use fs::files::Files;
 use config::Config;
 
-static NTHREADS: i32 = 15;
+static NTHREADS: i32 = 10;
 
 fn to_sep_col<'a>(col: &mut Vec<File>) -> Vec<Vec<File>> {
     let x = col.len() as f32 / (NTHREADS as f32);
@@ -24,14 +24,12 @@ fn to_sep_col<'a>(col: &mut Vec<File>) -> Vec<Vec<File>> {
     }
 
     let mut sliced: Vec<Vec<File>> = Vec::new();
-    let mut curr = 0;
     for i in 0..NTHREADS {
         let iter = vec[i as usize];
         let mut inner_vec: Vec<File> = Vec::new();
         for _ in 0..iter {
             let file: File = col.pop().unwrap();
             inner_vec.push(file);
-            curr = curr + 1;
         }
         sliced.push(inner_vec);
     }

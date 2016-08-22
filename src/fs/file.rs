@@ -60,7 +60,6 @@ impl File {
         }
     }
 
-    #[allow(dead_code)]
     pub fn set_md5(&mut self) {
         if self.md5 != "" {
             return;
@@ -80,8 +79,6 @@ impl File {
             Ok(_) => (),
         }
 
-        let md5 = generate_md5(&bytes);
-
-        self.md5 = md5;
+        self.md5 = generate_md5(&bytes);
     }
 }

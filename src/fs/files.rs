@@ -4,7 +4,7 @@ use std::fs::read_dir;
 use string::borrowed_string_to_static_str;
 
 use super::file::File;
-use super::dirs::get_extension;
+use super::dirs::{get_extension, unwrap_path};
 
 pub struct Files {
     pub collection: Vec<File>,
@@ -20,7 +20,7 @@ impl Files {
     }
 
     pub fn check(&mut self, dir: &str) {
-        self.traverse(&dir);
+        self.traverse(unwrap_path(&dir).to_str().unwrap());
     }
 
     fn push(&mut self, file: File) {

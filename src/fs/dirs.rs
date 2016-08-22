@@ -7,15 +7,28 @@ use std::env::{current_dir as current, home_dir as home};
 
 use string::{string_to_static_str, borrowed_string_to_static_str};
 
-const SLASH: char = '/' as char;
-const TIDLE: char = '~' as char;
+const SLASH: u8 = '/' as u8;
+const TIDLE: u8 = '~' as u8;
 
-pub fn current_directory() -> String {
-    current().unwrap().into_os_string().into_string().unwrap() + "/"
+macro_rules! expand {
+    ( $( &$x: expr ),* ) => {
+        {
+            let mut string = String::new();
+            $(
+                string.push_str($x.unwrap().to_str().unwrap());
+            )*
+            string.push_str(&"/");
+            string
+        }
+    };
 }
 
-pub fn home_directory() -> String {
-    home().unwrap().into_os_string().into_string().unwrap() + "/"
+fn current_directory() -> String {
+    expand!(&current())
+}
+
+fn home_directory() -> String {
+    expand!(&home())
 }
 
 pub fn unwrap_created_date<'a>(path: &'a Path) -> String {
@@ -34,28 +47,25 @@ pub fn get_extension<'a>(path: &'a Path) -> &'static str {
     borrowed_string_to_static_str(&&*extension.to_lowercase())
 }
 
-pub fn unwrap_path<'a>(file_path: &&str) -> &'a Path {
-    let home_dir = &*home_directory();
-    let current_dir = &*current_directory();
-
+pub fn unwrap_path<'a>(file_path: &str) -> &'a Path {
+    let first_byte = file_path.chars().nth(0).unwrap() as u8;
     let mut file_path_copy = String::new();
-    file_path_copy.push_str(file_path);
-
+    file_path_copy.push_str(&file_path);
     let mut mutable_str = String::new();
-    match file_path.as_bytes()[0] as char {
+    match first_byte {
         SLASH => (),
         TIDLE => {
-            mutable_str.push_str(home_dir);
-            file_path_copy.remove(0);
-            match file_path_copy.chars().nth(0).unwrap() {
+            mutable_str.push_str(&home_directory());
+            &file_path_copy.remove(0);
+            match file_path_copy.chars().nth(0).unwrap() as u8 {
                 SLASH => {
-                    file_path_copy.remove(0);
+                    &file_path_copy.remove(0);
                 }
                 _ => (),
             }
         }
         _ => {
-            mutable_str.push_str(current_dir);
+            mutable_str.push_str(&current_directory());
         }
     }
     mutable_str.push_str(&file_path_copy);
