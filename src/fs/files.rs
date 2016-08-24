@@ -1,6 +1,6 @@
 use std::str;
 use std::path::Path;
-use std::fs::read_dir;
+use std::fs::{read_dir, DirEntry};
 use string::borrowed_string_to_static_str;
 
 use super::file::File;
@@ -31,13 +31,25 @@ impl Files {
         let allowed_file_types = vec!["aae", "arw", "jpeg", "jpg", "mov", "mp4", "mts", "raw"];
 
         for entry in read_dir(&dir).unwrap() {
-            let s = borrowed_string_to_static_str(&entry.unwrap().path().to_str().unwrap());
+            let e: DirEntry = match entry {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
+
+            let p = e.path();
+            let f = match p.to_str() {
+                Some(f) => f,
+                _ => continue,
+            };
+
+            let s = borrowed_string_to_static_str(f);
             let path = Path::new(s);
 
             if path.is_file() == false {
                 self.traverse(path.to_str().unwrap());
                 continue;
             }
+
 
             if !allowed_file_types.contains(&&*get_extension(&path)) {
                 continue;

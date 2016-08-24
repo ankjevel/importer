@@ -8,7 +8,7 @@ pub fn string_to_static_str(s: String) -> &'static str {
     }
 }
 
-pub fn borrowed_string_to_static_str<'a>(s: &'a str) -> &'static str {
+pub fn borrowed_string_to_static_str(s: &str) -> &'static str {
     unsafe {
         let ret = transmute(&s as &str);
         forget(s);

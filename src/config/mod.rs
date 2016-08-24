@@ -66,7 +66,7 @@ impl Config {
     }
 
     pub fn query_str(&mut self, table: &'static str, q: &'static str) -> &'static str {
-        borrowed_string_to_static_str(&self.query(table, q).as_str().unwrap())
+        borrowed_string_to_static_str(&self.query(table, q).as_str().unwrap().clone().to_owned())
     }
 }
 

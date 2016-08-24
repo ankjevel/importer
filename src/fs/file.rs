@@ -5,7 +5,7 @@ use std::str;
 use std::error::Error;
 use std::io::prelude::*;
 use std::string::String;
-use std::fmt;
+use std::fmt::{Display, Formatter, Result};
 use std::path::Path;
 use std::fs::File as fsFile;
 
@@ -30,14 +30,9 @@ pub struct File {
     created: String,
 }
 
-impl fmt::Display for File {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "({:?}, {}, {}, {})",
-               self.path_string,
-               self.md5,
-               self.created,
-               self.extension)
+impl Display for File {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "({:?}, {}, {}, {})", self.path_string, self.md5, self.created, self.extension)
     }
 }
 
@@ -66,19 +61,19 @@ impl File {
         }
 
         let path = Path::new(&self.path_string);
-
         let display = path.display();
+
         let mut file = match fsFile::open(&path) {
             Err(why) => panic!("couldn't open {}: {}", display, why.description()),
             Ok(file) => file,
         };
 
-        let mut bytes = Vec::new();
-        match file.read_to_end(&mut bytes) {
+        let mut buffer = [0; 150];
+        match file.read(&mut buffer) {
             Err(why) => panic!("can't read file {}: {}", display, why.description()),
             Ok(_) => (),
         }
 
-        self.md5 = generate_md5(&bytes);
+        self.md5 = generate_md5(&buffer);
     }
 }

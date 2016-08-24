@@ -1,48 +1,50 @@
 extern crate crypto;
 extern crate toml;
+extern crate rusqlite;
+extern crate notify;
+
+static NTHREADS: i32 = 5;
 
 mod fs;
 mod config;
 mod string;
+mod cols;
 
 use std::thread::spawn;
 use std::sync::mpsc::channel;
 
-use fs::file::File;
 use fs::files::Files;
 use config::Config;
+use cols::to_sep_col;
 
-static NTHREADS: i32 = 10;
+use notify::{RecommendedWatcher, Watcher, Event, Result};
 
-fn to_sep_col<'a>(col: &mut Vec<File>) -> Vec<Vec<File>> {
-    let x = col.len() as f32 / (NTHREADS as f32);
-    let (extra, iterations) = (((x % 1.0) * (NTHREADS as f32)) as i32, x as i32);
-    let mut vec = vec![iterations; NTHREADS as usize];
+fn watch() -> Result<()> {
+    let (tx, rx) = channel();
+    let mut conf = Config::new();
+    let mut watcher: RecommendedWatcher = try!(Watcher::new(tx));
 
-    for i in 0..extra {
-        vec[i as usize] = iterations + 1
-    }
+    try!(watcher.watch(conf.query_str("paths", "watch")));
 
-    let mut sliced: Vec<Vec<File>> = Vec::new();
-    for i in 0..NTHREADS {
-        let iter = vec[i as usize];
-        let mut inner_vec: Vec<File> = Vec::new();
-        for _ in 0..iter {
-            let file: File = col.pop().unwrap();
-            inner_vec.push(file);
+    loop {
+        match rx.recv() {
+            Ok(Event {
+                path: Some(path),
+                op: Ok(op)
+            }) => {
+                println!("{:?} {:?}", op, path);
+            },
+            Err(e) => println!("watch error {}", e),
+            _ => ()
         }
-        sliced.push(inner_vec);
     }
-
-
-    sliced
 }
 
-fn main() {
-    let (mut conf, mut files) = (Config::new(), Files::new());
-    files.check(conf.query_str("paths", "images"));
-
+fn check (path: &'static str) {
     let (tx, rx) = channel();
+    let mut files = Files::new();
+
+    files.check(path);
 
     for vec in to_sep_col(files.collection_mut()) {
         let transmitter = tx.clone();
@@ -60,5 +62,13 @@ fn main() {
         for file in rx.recv().unwrap() {
             println!("file! {}", file);
         }
+    }
+}
+
+fn main() {
+    let mut conf = Config::new();
+    check(conf.query_str("paths", "images"));
+    if let Err(err) = watch() {
+        println!("Error! {:?}", err)
     }
 }
