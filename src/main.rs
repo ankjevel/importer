@@ -28,19 +28,16 @@ fn watch() -> Result<()> {
 
     loop {
         match rx.recv() {
-            Ok(Event {
-                path: Some(path),
-                op: Ok(op)
-            }) => {
+            Ok(Event { path: Some(path), op: Ok(op) }) => {
                 println!("{:?} {:?}", op, path);
-            },
+            }
             Err(e) => println!("watch error {}", e),
-            _ => ()
+            _ => (),
         }
     }
 }
 
-fn check (path: &'static str) {
+fn check(path: &'static str) {
     let (tx, rx) = channel();
     let mut files = Files::new();
 

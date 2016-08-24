@@ -52,10 +52,12 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Config {
-        Config { parser: match read_config(&unwrap_path(&get_config_path())).parse() {
-            Some(cfg) => cfg,
-            None => panic!("can't unwrap config"),
-        } }
+        Config {
+            parser: match read_config(&unwrap_path(&get_config_path())).parse() {
+                Some(cfg) => cfg,
+                None => panic!("can't unwrap config"),
+            },
+        }
     }
 
     fn query(&mut self, table: &'static str, q: &'static str) -> Value {

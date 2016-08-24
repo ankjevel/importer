@@ -32,7 +32,12 @@ pub struct File {
 
 impl Display for File {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "({:?}, {}, {}, {})", self.path_string, self.md5, self.created, self.extension)
+        write!(f,
+               "({:?}, {}, {}, {})",
+               self.path_string,
+               self.md5,
+               self.created,
+               self.extension)
     }
 }
 
