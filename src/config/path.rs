@@ -4,6 +4,7 @@ use config::Config as C;
 pub struct Path {
     pub images: String,
     pub watch: String,
+    pub device: String,
 }
 
 impl Path {
@@ -11,6 +12,7 @@ impl Path {
         Path {
             images: "/Volumes/NO NAME/".to_string(),
             watch: "/dev/".to_string(),
+            device: "sd".to_string(),
         }
     }
 
@@ -21,8 +23,16 @@ impl Path {
             .set_default(&prefix("images"), self.images.to_string())
             .unwrap();
 
+        let watch = if self.watch.ends_with("/") {
+            self.watch.to_string()
+        } else {
+            (self.watch.to_string() + "/").to_string()
+        };
+
+        config.set_default(&prefix("watch"), watch).unwrap();
+
         config
-            .set_default(&prefix("watch"), self.watch.to_string())
+            .set_default(&prefix("device"), self.device.to_string())
             .unwrap();
     }
 }
