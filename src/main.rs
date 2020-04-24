@@ -1,47 +1,51 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate lazy_static;
+
 extern crate crypto;
-extern crate toml;
-extern crate rusqlite;
+extern crate dirs;
 extern crate notify;
+extern crate rusqlite;
+extern crate serde;
 
-static NTHREADS: i32 = 5;
+const NTHREADS: i32 = 5;
 
-mod fs;
-mod config;
-mod string;
 mod cols;
+mod config;
+mod fs;
 
-use std::thread::spawn;
-use std::sync::mpsc::channel;
-
-use fs::files::Files;
-use config::Config;
 use cols::to_sep_col;
+use fs::files::Files;
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use std::{sync::mpsc::channel, thread::spawn, time::Duration};
 
-use notify::{RecommendedWatcher, Watcher, Event, Result};
+use self::config::CONFIG;
 
-fn watch() -> Result<()> {
+fn watch() -> notify::Result<()> {
     let (tx, rx) = channel();
-    let mut conf = Config::new();
-    let mut watcher: RecommendedWatcher = try!(Watcher::new(tx));
 
-    try!(watcher.watch(conf.query_str("paths", "watch")));
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(2)).unwrap();
+
+    watcher
+        .watch(&CONFIG.path.watch, RecursiveMode::Recursive)
+        .unwrap();
 
     loop {
         match rx.recv() {
-            Ok(Event { path: Some(path), op: Ok(op) }) => {
-                println!("{:?} {:?}", op, path);
-            }
+            Ok(event) => println!("{:?}", event),
             Err(e) => println!("watch error {}", e),
-            _ => (),
         }
     }
 }
 
-fn check(path: &'static str) {
+fn check(path: String) {
     let (tx, rx) = channel();
     let mut files = Files::new();
 
-    files.check(path);
+    files.check(&path);
 
     for vec in to_sep_col(files.collection_mut()) {
         let transmitter = tx.clone();
@@ -63,8 +67,7 @@ fn check(path: &'static str) {
 }
 
 fn main() {
-    let mut conf = Config::new();
-    check(conf.query_str("paths", "images"));
+    check(CONFIG.path.images.to_string());
     if let Err(err) = watch() {
         println!("Error! {:?}", err)
     }

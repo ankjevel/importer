@@ -1,11 +1,8 @@
-use std::str;
-use std::i64;
-use std::os::unix::fs::MetadataExt;
-use std::string::String;
-use std::path::Path;
-use std::env::{current_dir as current, home_dir as home};
+use std::{
+    env::current_dir as current, i64, os::unix::fs::MetadataExt, path::Path, str, string::String,
+};
 
-use string::{string_to_static_str, borrowed_string_to_static_str};
+use dirs::home_dir as home;
 
 const SLASH: u8 = '/' as u8;
 const TIDLE: u8 = '~' as u8;
@@ -31,23 +28,23 @@ fn home_directory() -> String {
     expand!(&home())
 }
 
-pub fn unwrap_created_date<'a>(path: &'a Path) -> String {
+pub fn unwrap_created_date(path: &Path) -> String {
     let meta = &path.metadata().unwrap();
     let created: i64 = meta.ctime();
 
     created.to_string()
 }
 
-pub fn get_extension<'a>(path: &'a Path) -> &'static str {
+pub fn get_extension(path: &Path) -> String {
     let extension = match path.extension() {
         None => "none",
         Some(ext) => ext.to_str().unwrap(),
     };
 
-    borrowed_string_to_static_str(&&*extension.to_lowercase())
+    extension.to_lowercase().to_string()
 }
 
-pub fn unwrap_path<'a>(file_path: &str) -> &'a Path {
+pub fn unwrap_path(file_path: &str) -> String {
     let first_byte = file_path.chars().nth(0).unwrap() as u8;
     let mut file_path_copy = String::new();
     file_path_copy.push_str(&file_path);
@@ -69,6 +66,9 @@ pub fn unwrap_path<'a>(file_path: &str) -> &'a Path {
         }
     }
     mutable_str.push_str(&file_path_copy);
-    let s: &'static str = string_to_static_str(mutable_str);
-    Path::new(s)
+
+    Path::new(&mutable_str.to_string())
+        .to_str()
+        .unwrap()
+        .to_string()
 }

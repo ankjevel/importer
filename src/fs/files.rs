@@ -1,10 +1,13 @@
-use std::str;
-use std::path::Path;
-use std::fs::{read_dir, DirEntry};
-use string::borrowed_string_to_static_str;
+use std::{
+    fs::{read_dir, DirEntry},
+    path::Path,
+    str,
+};
 
-use super::file::File;
-use super::dirs::{get_extension, unwrap_path};
+use super::{
+    dirs::{get_extension, unwrap_path},
+    file::File,
+};
 
 pub struct Files {
     pub collection: Vec<File>,
@@ -12,7 +15,9 @@ pub struct Files {
 
 impl Files {
     pub fn new() -> Files {
-        Files { collection: Vec::new() }
+        Files {
+            collection: Vec::new(),
+        }
     }
 
     pub fn collection_mut(&mut self) -> &mut Vec<File> {
@@ -20,7 +25,8 @@ impl Files {
     }
 
     pub fn check(&mut self, dir: &str) {
-        self.traverse(unwrap_path(&dir).to_str().unwrap());
+        let dir = unwrap_path(&dir);
+        self.traverse(&dir);
     }
 
     fn push(&mut self, file: File) {
@@ -42,14 +48,13 @@ impl Files {
                 _ => continue,
             };
 
-            let s = borrowed_string_to_static_str(f);
-            let path = Path::new(s);
+            let s = f.to_string();
+            let path = Path::new(&s);
 
             if path.is_file() == false {
                 self.traverse(path.to_str().unwrap());
                 continue;
             }
-
 
             if !allowed_file_types.contains(&&*get_extension(&path)) {
                 continue;

@@ -1,79 +1,43 @@
-extern crate toml;
+extern crate serde;
 
-use toml::{Parser, Value};
+pub mod path;
 
-use std::str;
-use std::error::Error;
-use std::io::prelude::*;
-use std::fs::File;
-use std::string::String;
-use std::path::Path;
-use std::env::var;
-use std::collections::BTreeMap;
+use self::path::Path;
+use config::{Config as C, Environment, File};
+use std::path::Path as StdPath;
 
-use fs::dirs::unwrap_path;
-
-use string::{string_to_static_str, borrowed_string_to_static_str};
-
-fn get_config_path() -> &'static str {
-    match var("CONFIG") {
-        Ok(val) => borrowed_string_to_static_str(&val),
-        Err(_) => "Config.toml",
-    }
-}
-
-fn read_config<'a>(path: &'a Path) -> Parser<'a> {
-    let display = path.display();
-    let mut file = match File::open(&path) {
-        Err(why) => panic!("couldn't open {}: {}", display, why.description()),
-        Ok(file) => file,
-    };
-
-    let extension = match path.extension() {
-        None => "",
-        Some(ext) => ext.to_str().unwrap(),
-    };
-
-    if extension.to_lowercase() != "toml" {
-        panic!("not a config file, {}: {}", display, extension);
-    }
-
-    let mut bytes = Vec::new();
-    match file.read_to_end(&mut bytes) {
-        Err(why) => panic!("can't read file {}: {}", display, why.description()),
-        Ok(_) => (),
-    }
-    Parser::new(&string_to_static_str(String::from_utf8_lossy(&bytes).into_owned()))
-}
-
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    parser: BTreeMap<String, Value>,
+    pub path: Path,
 }
 
-impl Config {
-    pub fn new() -> Config {
-        Config {
-            parser: match read_config(&unwrap_path(&get_config_path())).parse() {
-                Some(cfg) => cfg,
-                None => panic!("can't unwrap config"),
-            },
-        }
-    }
+fn set_defaults(config: &mut C) {
+    // config.set_default("debug", false).unwrap();
+    Path::default_config().merge_with_config(config, "path.");
+}
 
-    fn query(&mut self, table: &'static str, q: &'static str) -> Value {
-        match self.parser.get(table) {
-            Some(table) => table.lookup(q).unwrap().clone(),
-            None => panic!("table does not exist"),
-        }
-    }
-
-    pub fn query_str(&mut self, table: &'static str, q: &'static str) -> &'static str {
-        borrowed_string_to_static_str(&self.query(table, q).as_str().unwrap().clone().to_owned())
+fn merge_with_config_file(config: &mut C) {
+    let config_path = StdPath::new("config.json");
+    if config_path.exists() {
+        config.merge(File::from(config_path)).unwrap();
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[allow(unused_imports)]
-    use config;
+fn merge_with_env(config: &mut C) {
+    let env = Environment::new();
+    let env = env.separator("__");
+    let env = env.ignore_empty(true);
+    config.merge(env).unwrap();
+}
+
+lazy_static! {
+    pub static ref CONFIG: Config = {
+        let mut config = C::new();
+
+        set_defaults(&mut config);
+        merge_with_env(&mut config);
+        merge_with_config_file(&mut config);
+
+        config.try_into::<Config>().unwrap()
+    };
 }

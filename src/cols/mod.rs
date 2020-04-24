@@ -1,5 +1,4 @@
-use fs::file::File;
-use super::NTHREADS;
+use crate::{fs::file::File, NTHREADS};
 
 pub fn to_sep_col<'a>(col: &mut Vec<File>) -> Vec<Vec<File>> {
     let x = col.len() as f32 / (NTHREADS as f32);

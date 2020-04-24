@@ -2,9 +2,22 @@
 name = "importer"
 version = "0.0.1"
 authors = ["Dennis Pettersson <mail@dennispettersson.se>"]
+edition = "2018"
 
 [dependencies]
-rust-crypto = "^0.2"
-toml = "^0.1"
-rusqlite = "^0.7"
-notify = "2.6.2"
+config = "0.10.1"
+lazy_static = "1.4.0"
+notify = "4.0.15"
+rust-crypto = "0.2.36"
+serde = "1.0.106"
+serde_derive = "1.0.106"
+serde_json = "1.0.51"
+dirs = "2.0.2"
+
+[dependencies.rusqlite]
+version = "0.23.1"
+features = ["bundled"]
+
+[profile.release]
+lto = true
+panic = "abort"

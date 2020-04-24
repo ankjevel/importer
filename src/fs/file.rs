@@ -1,15 +1,13 @@
-use crypto::md5::Md5;
-use crypto::digest::Digest;
+use crypto::{digest::Digest, md5::Md5};
 
-use std::str;
-use std::error::Error;
-use std::io::prelude::*;
-use std::string::String;
-use std::fmt::{Display, Formatter, Result};
-use std::path::Path;
-use std::fs::File as fsFile;
+use std::{
+    fmt::{Display, Formatter, Result},
+    fs::File as fsFile,
+    io::prelude::*,
+    path::Path,
+    string::String,
+};
 
-use string::borrowed_string_to_static_str;
 use super::dirs::{get_extension, unwrap_created_date};
 
 fn generate_md5(bytes: &[u8]) -> String {
@@ -32,12 +30,11 @@ pub struct File {
 
 impl Display for File {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f,
-               "({:?}, {}, {}, {})",
-               self.path_string,
-               self.md5,
-               self.created,
-               self.extension)
+        write!(
+            f,
+            "({:?}, {}, {}, {})",
+            self.path_string, self.md5, self.created, self.extension
+        )
     }
 }
 
@@ -56,7 +53,7 @@ impl File {
             path_string: String::from(path.to_str().unwrap()),
             md5: "".to_string(),
             created: created,
-            extension: String::from(borrowed_string_to_static_str(&extension)),
+            extension: extension.to_string(),
         }
     }
 
@@ -69,13 +66,13 @@ impl File {
         let display = path.display();
 
         let mut file = match fsFile::open(&path) {
-            Err(why) => panic!("couldn't open {}: {}", display, why.description()),
+            Err(why) => panic!("couldn't open {}: {}", display, why),
             Ok(file) => file,
         };
 
         let mut buffer = [0; 150];
         match file.read(&mut buffer) {
-            Err(why) => panic!("can't read file {}: {}", display, why.description()),
+            Err(why) => panic!("can't read file {}: {}", display, why),
             Ok(_) => (),
         }
 
